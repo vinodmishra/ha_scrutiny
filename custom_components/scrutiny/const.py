@@ -13,7 +13,7 @@ DOMAIN: str = "scrutiny"
 # User-visible name of the integration. Also used as default manufacturer for devices.
 NAME: str = "Scrutiny"
 # Version of the integration.
-VERSION: str = "0.3.3"
+VERSION: str = "0.3.4"
 
 # Configuration keys used in config_flow.py and __init__.py.
 CONF_HOST: str = "host"  # Key for the Scrutiny server host.
@@ -58,6 +58,7 @@ ATTR_MODEL_NAME: str = "model_name"  # e.g., "Samsung SSD 860 EVO"
 ATTR_FIRMWARE: str = "firmware"  # Firmware version of the disk.
 ATTR_CAPACITY: str = "capacity"  # Disk capacity in bytes.
 ATTR_SERIAL_NUMBER: str = "serial_number"  # Serial number of the disk.
+ATTR_UPDATED_AT: str = "UpdatedAt" # Last update timestamp of the disk.
 
 # Keys specifically from the '/api/summary' -> 'device' object of a disk.
 ATTR_SUMMARY_DEVICE_STATUS: str = (
