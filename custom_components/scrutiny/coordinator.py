@@ -297,16 +297,31 @@ class ScrutinyDataUpdateCoordinator(DataUpdateCoordinator[dict[str, dict[str, An
                 # Create a task to fetch details for this WWN.
                 detail_tasks.append(self.api_client.async_get_device_details(wwn))
 
-            # 2. Fetch detailed data for all disks concurrently.
+            # 2. Fetch detailed data for all disks in batches to avoid overwhelming Scrutiny.
             if detail_tasks:
                 self.logger.debug("Fetching details for %d disk(s).", len(detail_tasks))
-                # `asyncio.gather` runs all detail_tasks concurrently.
-                # `return_exceptions=True` means if a task raises an exception,
-                # the exception object is returned in its place in the results list,
-                # rather than stopping all other tasks.
-                detail_results = await asyncio.gather(
-                    *detail_tasks, return_exceptions=True
-                )
+                # Batch size: process 5 disks at a time to avoid overwhelming the API
+                batch_size = 5
+                detail_results = []
+                
+                for i in range(0, len(detail_tasks), batch_size):
+                    batch = detail_tasks[i:i + batch_size]
+                    self.logger.debug(
+                        "Fetching batch %d-%d of %d disks",
+                        i + 1,
+                        min(i + batch_size, len(detail_tasks)),
+                        len(detail_tasks),
+                    )
+                    # `asyncio.gather` runs this batch concurrently.
+                    # `return_exceptions=True` means if a task raises an exception,
+                    # the exception object is returned in its place in the results list,
+                    # rather than stopping all other tasks.
+                    batch_results = await asyncio.gather(*batch, return_exceptions=True)
+                    detail_results.extend(batch_results)
+                    # Small delay between batches to give Scrutiny time to breathe
+                    if i + batch_size < len(detail_tasks):
+                        await asyncio.sleep(0.5)
+                
                 # Process the results (or exceptions) for each disk.
                 for i, wwn_key in enumerate(wwn_order):
                     self._process_detail_results(

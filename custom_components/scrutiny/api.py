@@ -145,7 +145,8 @@ class ScrutinyApiClient:
 
         try:
             # Set a timeout for the request.
-            async with asyncio.timeout(10):
+            # Increased to 30s to handle large numbers of disks
+            async with asyncio.timeout(30):
                 response = await self._session.request(
                     method,
                     url,
