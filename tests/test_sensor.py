@@ -188,7 +188,7 @@ def create_main_sensor(
     summary_device_data = coordinator.data.get(wwn, {}).get(KEY_SUMMARY_DEVICE, {})
     device_info_name = (
         f"{summary_device_data.get(ATTR_MODEL_NAME, 'Disk')} "
-        f"({summary_device_data.get(ATTR_DEVICE_NAME, wwn[-6:])})"
+        f"({wwn[-6:]))"
     )
     device_info = DeviceInfo(
         identifiers={(DOMAIN, wwn)},
@@ -222,7 +222,7 @@ def create_smart_attribute_sensor(
     summary_device_data = coordinator.data.get(wwn, {}).get(KEY_SUMMARY_DEVICE, {})
     device_info_name = (
         f"{summary_device_data.get(ATTR_MODEL_NAME, 'Disk')} "
-        f"({summary_device_data.get(ATTR_DEVICE_NAME, wwn[-6:])})"
+        f"({wwn[-6:]})"
     )
     device_info = DeviceInfo(  # Simplified DeviceInfo for the test
         identifiers={(DOMAIN, wwn)},
@@ -714,7 +714,7 @@ async def test_smart_attribute_sensor_name_fallback(
     summary_device_data_for_name = current_test_data[wwn][KEY_SUMMARY_DEVICE]
     expected_device_info_name_in_sensor = (
         f"{summary_device_data_for_name.get(ATTR_MODEL_NAME, 'Disk')} "
-        f"({summary_device_data_for_name.get(ATTR_DEVICE_NAME, wwn[-6:])})"
+        f"({wwn[-6:]})"
     )
     assert sensor.device_info is not None
     assert sensor.device_info["name"] == expected_device_info_name_in_sensor  # type: ignore
@@ -734,12 +734,7 @@ async def test_smart_attribute_sensor_name_fallback(
     )
 
     # --- Teste Unique ID (mit Fallback-Namensteil) ---
-    device_name_raw_for_uid = summary_device_data_for_name.get(ATTR_DEVICE_NAME)
-    device_name_cleaned_for_id_uid = (
-        device_name_raw_for_uid.split("/")[-1]
-        if device_name_raw_for_uid
-        else f"disk_{wwn[-6:]}"
-    )
+    device_name_cleaned_for_id_uid = f"disk_{wwn[-6:]}"
     device_name_slug_for_id_uid = slugify(device_name_cleaned_for_id_uid)
 
     # Der slugifizierte Teil für die ID kommt vom entity_description.name, der den Fallback enthält
@@ -836,7 +831,7 @@ async def test_smart_attribute_sensor_basic_init_and_state(
     summary_device_data_for_name = current_test_data[wwn][KEY_SUMMARY_DEVICE]
     expected_device_info_name_in_sensor = (
         f"{summary_device_data_for_name.get(ATTR_MODEL_NAME, 'Disk')} "
-        f"({summary_device_data_for_name.get(ATTR_DEVICE_NAME, wwn[-6:])})"
+        f"({wwn[-6:]})"
     )
     assert sensor.device_info is not None
     assert sensor.device_info["name"] == expected_device_info_name_in_sensor  # type: ignore
@@ -857,12 +852,8 @@ async def test_smart_attribute_sensor_basic_init_and_state(
     )
 
     # --- Teste Unique ID ---
-    device_name_raw_for_uid = summary_device_data_for_name.get(ATTR_DEVICE_NAME)
-    device_name_cleaned_for_id_uid = (
-        device_name_raw_for_uid.split("/")[-1]
-        if device_name_raw_for_uid
-        else f"disk_{wwn[-6:]}"
-    )
+    device_name_cleaned_for_id_uid = f"disk_{wwn[-6:]}"
+
     device_name_slug_for_id_uid = slugify(device_name_cleaned_for_id_uid)
 
     # Der slugifizierte Teil für die ID kommt vom entity_description.name

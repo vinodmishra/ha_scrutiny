@@ -188,7 +188,7 @@ async def async_setup_entry(
             # Use model name or "Disk"
             f"{summary_device_data.get(ATTR_MODEL_NAME, 'Disk')} "
             # Use device name or last 6 chars of WWN
-            f"({summary_device_data.get(ATTR_DEVICE_NAME, wwn[-6:])})"
+            f"({wwn[-6:]})"
         )
         device_info = DeviceInfo(
             identifiers={(DOMAIN, wwn)},  # Unique identifier for this device (WWN)
@@ -473,12 +473,8 @@ class ScrutinySmartAttributeSensor(
 
         # Create a unique ID for this sensor entity.
         # Slugify the name part to ensure it's URL-friendly and consistent.
-        summary_device_data = coordinator.data.get(wwn, {}).get(KEY_SUMMARY_DEVICE, {})
-        device_name_raw = summary_device_data.get(ATTR_DEVICE_NAME)
-        if not device_name_raw:
-            device_name_cleaned_for_id = f"disk_{wwn[-6:]}"
-        else:
-            device_name_cleaned_for_id = device_name_raw.split("/")[-1]
+        
+        device_name_cleaned_for_id = f"disk_{wwn[-6:]}"
         device_name_slug_for_id = slugify(device_name_cleaned_for_id)
 
         # Verwende den ursprünglichen, eindeutigen
