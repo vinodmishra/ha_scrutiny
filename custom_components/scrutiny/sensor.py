@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import (
@@ -52,6 +53,7 @@ from .const import (
     ATTR_THRESH,
     ATTR_WHEN_FAILED,
     ATTR_WORST,
+    ATTR_UPDATED_AT,
     DOMAIN,  # The integration's domain
     KEY_DETAILS_METADATA,  # Key for SMART attribute metadata in coordinator data
     KEY_DETAILS_SMART_LATEST,  # Key for latest SMART details in coordinator data
@@ -136,6 +138,13 @@ MAIN_DISK_SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
         icon="mdi:shield-check-outline",
         device_class=SensorDeviceClass.ENUM,
         options=[*ATTR_SMART_STATUS_MAP.values(), ATTR_SMART_STATUS_UNKNOWN],
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        key=ATTR_UPDATED_AT,
+        name="Last Update",
+        icon="mdi:update",
+        device_class=SensorDeviceClass.TIMESTAMP,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
@@ -382,6 +391,21 @@ class ScrutinyMainDiskSensor(
                 if status_code is not None
                 else ATTR_SMART_STATUS_UNKNOWN
             )
+        elif key == ATTR_UPDATED_AT:
+            updated_at_str = summary_device_data.get(ATTR_UPDATED_AT)
+            if updated_at_str and isinstance(updated_at_str, str):
+                try:
+                    # The timestamp ends with 'Z', which fromisoformat doesn't like.
+                    # Replace 'Z' with '+00:00' for UTC timezone.
+                    if updated_at_str.endswith("Z"):
+                        updated_at_str = updated_at_str[:-1] + "+00:00"
+                    value = datetime.fromisoformat(updated_at_str)
+                except ValueError:
+                    LOGGER.warning(
+                        "Could not parse timestamp: %s", updated_at_str
+                    )
+                    value = None
+
         # Set the sensor's native value.
         self._attr_native_value = value
 
