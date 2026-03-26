@@ -184,12 +184,10 @@ async def async_setup_entry(
 
         # Create DeviceInfo for this disk. All sensors related
         #  to this disk will be associated with this device.
-        device_info_name = (
-            # Use model name or "Disk"
-            f"{summary_device_data.get(ATTR_MODEL_NAME, 'Disk')} "
-            # Use device name or last 6 chars of WWN
-            f"({summary_device_data.get(ATTR_DEVICE_NAME, wwn[-6:])})"
-        )
+        # Use WWN as the device name — it is the unique disk identifier
+        # from the Scrutiny API and is always available, unlike model name
+        # or device path which may be absent.
+        device_info_name = wwn
         device_info = DeviceInfo(
             identifiers={(DOMAIN, wwn)},  # Unique identifier for this device (WWN)
             name=device_info_name,

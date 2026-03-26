@@ -186,10 +186,7 @@ def create_main_sensor(
     # Hole die Daten für die DeviceInfo aus den Koordinator-Daten
     # (simuliert, was async_setup_entry tun würde)
     summary_device_data = coordinator.data.get(wwn, {}).get(KEY_SUMMARY_DEVICE, {})
-    device_info_name = (
-        f"{summary_device_data.get(ATTR_MODEL_NAME, 'Disk')} "
-        f"({summary_device_data.get(ATTR_DEVICE_NAME, wwn[-6:])})"
-    )
+    device_info_name = wwn
     device_info = DeviceInfo(
         identifiers={(DOMAIN, wwn)},
         name=device_info_name,
@@ -220,10 +217,7 @@ def create_smart_attribute_sensor(
 ) -> ScrutinySmartAttributeSensor:
     """Helper to create a ScrutinySmartAttributeSensor instance for testing."""
     summary_device_data = coordinator.data.get(wwn, {}).get(KEY_SUMMARY_DEVICE, {})
-    device_info_name = (
-        f"{summary_device_data.get(ATTR_MODEL_NAME, 'Disk')} "
-        f"({summary_device_data.get(ATTR_DEVICE_NAME, wwn[-6:])})"
-    )
+    device_info_name = wwn
     device_info = DeviceInfo(  # Simplified DeviceInfo for the test
         identifiers={(DOMAIN, wwn)},
         name=device_info_name,
@@ -293,12 +287,7 @@ async def test_async_setup_entry_one_disk(hass: HomeAssistant):
             assert entity.device_info is not None  # type: ignore
             assert entity.device_info["identifiers"] == {(DOMAIN, MOCK_WWN1)}  # type: ignore
             assert entity.device_info["via_device"] == (DOMAIN, "test_entry_id_sensor")  # type: ignore
-            assert (
-                COORDINATOR_DATA_ONE_DISK[MOCK_WWN1][KEY_SUMMARY_DEVICE][
-                    ATTR_MODEL_NAME
-                ]  # type: ignore
-                in entity.device_info["name"]  # type: ignore
-            )
+            assert entity.device_info["name"] == MOCK_WWN1  # type: ignore
         elif isinstance(entity, ScrutinySmartAttributeSensor):
             smart_attribute_sensor_count += 1
             assert entity.device_info is not None
@@ -711,13 +700,8 @@ async def test_smart_attribute_sensor_name_fallback(
 
     # --- Teste die Komponenten des Namens (mit Fallback) ---
     # 1. device_info["name"] (wie es vom Sensor gespeichert wird)
-    summary_device_data_for_name = current_test_data[wwn][KEY_SUMMARY_DEVICE]
-    expected_device_info_name_in_sensor = (
-        f"{summary_device_data_for_name.get(ATTR_MODEL_NAME, 'Disk')} "
-        f"({summary_device_data_for_name.get(ATTR_DEVICE_NAME, wwn[-6:])})"
-    )
     assert sensor.device_info is not None
-    assert sensor.device_info["name"] == expected_device_info_name_in_sensor  # type: ignore
+    assert sensor.device_info["name"] == wwn  # type: ignore
 
     # 2. entity_description.name (sollte den Fallback-Namensteil enthalten,
     #    der von der Sensor-Logik generiert wurde)
@@ -734,7 +718,8 @@ async def test_smart_attribute_sensor_name_fallback(
     )
 
     # --- Teste Unique ID (mit Fallback-Namensteil) ---
-    device_name_raw_for_uid = summary_device_data_for_name.get(ATTR_DEVICE_NAME)
+    summary_device_data_for_uid = current_test_data[wwn][KEY_SUMMARY_DEVICE]
+    device_name_raw_for_uid = summary_device_data_for_uid.get(ATTR_DEVICE_NAME)
     device_name_cleaned_for_id_uid = (
         device_name_raw_for_uid.split("/")[-1]
         if device_name_raw_for_uid
@@ -833,13 +818,8 @@ async def test_smart_attribute_sensor_basic_init_and_state(
 
     # --- Teste die Komponenten des Namens ---
     # 1. device_info["name"]
-    summary_device_data_for_name = current_test_data[wwn][KEY_SUMMARY_DEVICE]
-    expected_device_info_name_in_sensor = (
-        f"{summary_device_data_for_name.get(ATTR_MODEL_NAME, 'Disk')} "
-        f"({summary_device_data_for_name.get(ATTR_DEVICE_NAME, wwn[-6:])})"
-    )
     assert sensor.device_info is not None
-    assert sensor.device_info["name"] == expected_device_info_name_in_sensor  # type: ignore
+    assert sensor.device_info["name"] == wwn  # type: ignore
 
     # 2. entity_description.name (sollte den von der Sensor-Logik bestimmten Namensteil enthalten)
     #    Die Sensor-Logik ist: if display_name_meta: use display_name_meta; else: fallback.
@@ -857,7 +837,8 @@ async def test_smart_attribute_sensor_basic_init_and_state(
     )
 
     # --- Teste Unique ID ---
-    device_name_raw_for_uid = summary_device_data_for_name.get(ATTR_DEVICE_NAME)
+    summary_device_data_for_uid = current_test_data[wwn][KEY_SUMMARY_DEVICE]
+    device_name_raw_for_uid = summary_device_data_for_uid.get(ATTR_DEVICE_NAME)
     device_name_cleaned_for_id_uid = (
         device_name_raw_for_uid.split("/")[-1]
         if device_name_raw_for_uid
